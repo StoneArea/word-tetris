@@ -1,0 +1,4 @@
+node_modules/
+login_config.json
+rankings.db
+.env

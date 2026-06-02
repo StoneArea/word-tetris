@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>단어 테트리스 - SKY영어학원</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- ===== 홈 화면 ===== -->
+    <div id="home-screen" class="screen active">
+      <div class="logo-area">
+        <h1>🧱 단어 테트리스</h1>
+        <p class="subtitle">SKY영어학원</p>
+      </div>
+
+      <div class="search-box">
+        <input type="text" id="student-search" placeholder="이름을 입력하세요" autocomplete="off">
+        <div id="search-results" class="search-results hidden"></div>
+      </div>
+
+      <!-- 오늘의 랭킹 -->
+      <div id="ranking-section" class="ranking-section">
+        <h3>🏆 오늘의 랭킹</h3>
+        <div id="ranking-list" class="ranking-list">
+          <p class="empty-msg">아직 기록이 없습니다</p>
+        </div>
+      </div>
+
+      <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <p>학생 정보를 불러오는 중...</p>
+      </div>
+    </div>
+
+    <!-- ===== 학생 설정 화면 ===== -->
+    <div id="setup-screen" class="screen">
+      <button class="nav-back" onclick="showScreen('home-screen')">← 뒤로</button>
+
+      <div class="setup-container">
+        <div class="info-card">
+          <h3 id="selected-name"></h3>
+          <p id="selected-book" class="book-name"></p>
+        </div>
+
+        <!-- 진도표 -->
+        <div class="schedule-section">
+          <h4>📅 진도표</h4>
+          <div id="schedule-table" class="schedule-table"></div>
+        </div>
+
+        <!-- Day 선택 -->
+        <div class="day-selector">
+          <div class="day-header">
+            <h4>연습 범위</h4>
+            <label class="range-toggle">
+              <input type="checkbox" id="range-mode" checked>
+              <span>시험범위 전체</span>
+            </label>
+          </div>
+          <div id="day-chips" class="day-chips"></div>
+        </div>
+
+        <!-- 모드 선택 -->
+        <div class="mode-grid">
+          <button class="big-mode-btn" data-mode="tetris" onclick="selectMode('tetris')">
+            <span class="mode-icon">🧱</span>
+            <span class="mode-label">테트리스</span>
+            <span class="mode-desc">블록 쌓기 + 단어 퀴즈</span>
+          </button>
+          <button class="big-mode-btn" data-mode="study" onclick="selectMode('study')">
+            <span class="mode-icon">📖</span>
+            <span class="mode-label">학습모드</span>
+            <span class="mode-desc">플래시카드로 암기</span>
+          </button>
+        </div>
+
+        <button id="start-btn" class="start-btn" disabled>게임 시작</button>
+      </div>
+    </div>
+
+    <!-- ===== 학습모드 화면 ===== -->
+    <div id="study-screen" class="screen">
+      <div class="study-header">
+        <button class="nav-back" onclick="exitStudy()">← 나가기</button>
+        <span id="study-progress">0 / 0</span>
+      </div>
+      <div class="study-card-area">
+        <div id="study-card" class="study-card" onclick="flipCard()">
+          <div class="card-front">
+            <p class="card-meaning" id="card-meaning"></p>
+          </div>
+          <div class="card-back hidden">
+            <p class="card-word" id="card-word"></p>
+            <p class="card-full-meaning" id="card-full-meaning"></p>
+            <p class="card-sentence" id="card-sentence"></p>
+          </div>
+        </div>
+      </div>
+      <div class="study-buttons">
+        <button class="study-btn know" onclick="markCard(true)">✓ 알아요</button>
+        <button class="study-btn dont-know" onclick="markCard(false)">✗ 몰라요</button>
+      </div>
+      <div id="study-result" class="study-result hidden">
+        <h3>학습 완료!</h3>
+        <p id="study-summary"></p>
+        <div id="study-wrong-list"></div>
+        <button class="start-btn" onclick="retryStudy()">모르는 단어 다시 학습</button>
+        <button class="home-btn" onclick="exitStudy()" style="margin-top:10px">돌아가기</button>
+      </div>
+    </div>
+
+    <!-- ===== 게임 화면 ===== -->
+    <div id="game-screen" class="screen">
+      <div class="game-header">
+        <div class="game-stat"><span class="label">점수</span><span id="score">0</span></div>
+        <div class="game-stat"><span class="label">콤보</span><span id="combo">0</span></div>
+        <div class="game-stat"><span class="label">레벨</span><span id="level">1</span></div>
+        <div class="game-stat"><span class="label">라인</span><span id="lines">0</span></div>
+      </div>
+
+      <div class="game-area">
+        <canvas id="game-canvas"></canvas>
+        <!-- 퀴즈 오버레이 -->
+        <div id="quiz-overlay" class="quiz-overlay hidden">
+          <p class="quiz-meaning" id="quiz-meaning"></p>
+          <div id="quiz-choices" class="quiz-choices"></div>
+          <div id="quiz-typing" class="quiz-typing hidden">
+            <input type="text" id="quiz-input" placeholder="영단어 입력" autocomplete="off" spellcheck="false">
+          </div>
+          <p id="quiz-feedback" class="quiz-feedback"></p>
+        </div>
+      </div>
+
+      <!-- 모바일 컨트롤 -->
+      <div class="mobile-controls">
+        <button class="ctrl-btn" id="ctrl-left">◀</button>
+        <button class="ctrl-btn" id="ctrl-down">▼</button>
+        <button class="ctrl-btn" id="ctrl-rotate">↻</button>
+        <button class="ctrl-btn" id="ctrl-right">▶</button>
+        <button class="ctrl-btn ctrl-drop" id="ctrl-drop">⏬</button>
+      </div>
+
+      <button id="back-btn" class="back-btn" onclick="confirmExit()">✕</button>
+    </div>
+
+    <!-- ===== 결과 화면 ===== -->
+    <div id="result-screen" class="screen">
+      <div class="result-card">
+        <h2>게임 결과</h2>
+        <div class="result-stats">
+          <div class="stat-row"><span>점수</span><span id="final-score">0</span></div>
+          <div class="stat-row"><span>정답률</span><span id="accuracy">0%</span></div>
+          <div class="stat-row"><span>최고 콤보</span><span id="max-combo">0</span></div>
+          <div class="stat-row"><span>클리어 라인</span><span id="final-lines">0</span></div>
+        </div>
+        <div id="wrong-list" class="wrong-list hidden">
+          <h3>틀린 단어</h3>
+          <div id="wrong-words"></div>
+        </div>
+        <div class="result-buttons">
+          <button class="retry-btn" onclick="retryGame()">다시 하기</button>
+          <button class="home-btn" onclick="showScreen('home-screen')">처음으로</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/game.js"></script>
+</body>
+</html>
