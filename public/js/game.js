@@ -585,16 +585,18 @@ function setupControls() {
   var addTouch = function(id, fn, repeat) {
     var el = document.getElementById(id);
     if (!el) return;
-    var interval;
-    var start = function(e) { e.preventDefault(); fn(); if (repeat) interval = setInterval(fn, 100); };
-    var stop = function() { if (interval) { clearInterval(interval); interval = null; } };
-    el.addEventListener('touchstart', start, { passive: false });
+    var interval = null;
+    var isTouching = false;
+    var stop = function() { if (interval) { clearInterval(interval); interval = null; } isTouching = false; };
+    var onTouch = function(e) { e.preventDefault(); isTouching = true; stop(); fn(); if (repeat) interval = setInterval(fn, 100); };
+    var onMouse = function(e) { if (isTouching) return; e.preventDefault(); stop(); fn(); if (repeat) interval = setInterval(fn, 100); };
+    el.addEventListener('touchstart', onTouch, { passive: false });
     el.addEventListener('touchend', stop);
     el.addEventListener('touchcancel', stop);
-    el.addEventListener('mousedown', start);
+    el.addEventListener('mousedown', onMouse);
     el.addEventListener('mouseup', stop);
     el.addEventListener('mouseleave', stop);
-    touchHandlers[id] = { start: start, stop: stop, el: el };
+    touchHandlers[id] = { onTouch: onTouch, onMouse: onMouse, stop: stop, el: el };
   };
 
   addTouch('ctrl-left', moveLeft, true);
@@ -608,10 +610,11 @@ function removeControls() {
   if (keyHandler) document.removeEventListener('keydown', keyHandler);
   for (var id in touchHandlers) {
     var h = touchHandlers[id];
-    h.el.removeEventListener('touchstart', h.start);
+    h.stop();
+    h.el.removeEventListener('touchstart', h.onTouch);
     h.el.removeEventListener('touchend', h.stop);
     h.el.removeEventListener('touchcancel', h.stop);
-    h.el.removeEventListener('mousedown', h.start);
+    h.el.removeEventListener('mousedown', h.onMouse);
     h.el.removeEventListener('mouseup', h.stop);
     h.el.removeEventListener('mouseleave', h.stop);
   }
