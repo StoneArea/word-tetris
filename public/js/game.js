@@ -41,12 +41,10 @@ function startGame(words, book, name) {
   var maxH = area.clientHeight - 10;
   var maxW = area.clientWidth - 10;
   var cellFromH = Math.floor(maxH / ROWS);
-  var cellFromW = Math.floor(maxW / (COLS + 4)); // 게임판 + 미리보기 4칸
+  var cellFromW = Math.floor(maxW / COLS);
   cellSize = Math.min(cellFromH, cellFromW, 28);
 
-  // 캔버스: 게임판 + 다음블록 영역
-  var previewW = cellSize * 4;
-  canvasW = cellSize * COLS + previewW;
+  canvasW = cellSize * COLS;
   canvasH = cellSize * ROWS;
   canvas.width = canvasW;
   canvas.height = canvasH;
@@ -505,45 +503,8 @@ function draw() {
         if (piece.shape[r][c]) drawCell(piece.x + c, piece.y + r, piece.color, 1.0, C);
   }
 
-  // === 다음 블록 미리보기 ===
-  var previewX = boardW + 8;
-  var previewY = 8;
-  ctx.fillStyle = 'rgba(255,255,255,0.05)';
-  ctx.fillRect(boardW, 0, canvasW - boardW, canvasH);
-
-  // 구분선
-  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(boardW, 0); ctx.lineTo(boardW, canvasH); ctx.stroke();
-
-  // "NEXT" 레이블
-  ctx.fillStyle = 'rgba(255,255,255,0.4)';
-  ctx.font = 'bold ' + Math.round(C * 0.55) + 'px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('NEXT', boardW + (canvasW - boardW) / 2, previewY + C * 0.7);
-
-  // 다음 블록 그리기
-  if (nextPiece) {
-    var np = nextPiece;
-    var previewCellSize = Math.floor(C * 0.8);
-    var shapeW = np.shape[0].length * previewCellSize;
-    var shapeH = np.shape.length * previewCellSize;
-    var ox = boardW + Math.floor((canvasW - boardW - shapeW) / 2);
-    var oy = previewY + C * 1.2;
-
-    for (var r = 0; r < np.shape.length; r++) {
-      for (var c = 0; c < np.shape[r].length; c++) {
-        if (np.shape[r][c]) {
-          ctx.fillStyle = np.color;
-          ctx.fillRect(ox + c * previewCellSize + 1, oy + r * previewCellSize + 1,
-            previewCellSize - 2, previewCellSize - 2);
-          ctx.fillStyle = 'rgba(255,255,255,0.15)';
-          ctx.fillRect(ox + c * previewCellSize + 1, oy + r * previewCellSize + 1,
-            previewCellSize - 2, 2);
-        }
-      }
-    }
-  }
+  // === 다음 블록 미리보기 (헤더 캔버스) ===
+  drawNextPreview();
 
   // === 효과 ===
   drawEffects();
@@ -560,6 +521,28 @@ function drawCell(x, y, color, alpha, C) {
   ctx.fillStyle = 'rgba(0,0,0,0.15)';
   ctx.fillRect(x * C + 1, y * C + C - 4, C - 2, 3);
   ctx.restore();
+}
+
+function drawNextPreview() {
+  var nc = document.getElementById('next-canvas');
+  if (!nc || !nextPiece) return;
+  var nctx = nc.getContext('2d');
+  var np = nextPiece;
+  var pcs = 12; // preview cell size
+  // 캔버스 크기 맞추기
+  nc.width = np.shape[0].length * pcs;
+  nc.height = np.shape.length * pcs;
+  nctx.clearRect(0, 0, nc.width, nc.height);
+  for (var r = 0; r < np.shape.length; r++) {
+    for (var c = 0; c < np.shape[r].length; c++) {
+      if (np.shape[r][c]) {
+        nctx.fillStyle = np.color;
+        nctx.fillRect(c * pcs + 1, r * pcs + 1, pcs - 2, pcs - 2);
+        nctx.fillStyle = 'rgba(255,255,255,0.2)';
+        nctx.fillRect(c * pcs + 1, r * pcs + 1, pcs - 2, 2);
+      }
+    }
+  }
 }
 
 // ===== 컨트롤 =====

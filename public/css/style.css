@@ -188,7 +188,9 @@ body {
   flex: 1; display: flex; justify-content: center; align-items: center;
   position: relative; overflow: hidden;
 }
-#game-canvas { border: 2px solid var(--border); border-radius: 6px; background: #0a0a1a; max-width: 100%; height: auto; }
+#game-canvas { border: 2px solid var(--border); border-radius: 6px; background: #0a0a1a; max-width: 100%; }
+.next-preview { display: flex; flex-direction: column; align-items: center; }
+#next-canvas { background: rgba(255,255,255,0.03); border-radius: 4px; margin-top: 2px; }
 
 /* 퀴즈 오버레이 */
 .quiz-overlay {
@@ -222,16 +224,17 @@ body {
 
 /* 모바일 컨트롤 */
 .mobile-controls {
-  display: flex; gap: 6px; padding: 8px 12px; justify-content: center;
+  display: flex; padding: 8px 12px; justify-content: space-between; align-items: center;
   background: var(--card); border-top: 1px solid var(--border);
 }
+.ctrl-group-left, .ctrl-group-right { display: flex; gap: 6px; }
 .ctrl-btn {
-  width: 56px; height: 50px; border-radius: 10px; border: 2px solid var(--border);
+  width: 58px; height: 54px; border-radius: 12px; border: 2px solid var(--border);
   background: rgba(255,255,255,0.05); color: var(--text);
-  font-size: 1.3em; cursor: pointer;
+  font-size: 1.4em; cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
 .ctrl-btn:active { background: rgba(0,212,255,0.2); border-color: var(--accent); }
-.ctrl-drop { background: rgba(124,58,237,0.2); border-color: var(--accent2); }
+.ctrl-drop { width: 64px; height: 54px; background: rgba(124,58,237,0.15); border-color: var(--accent2); font-size: 1.5em; }
 
 .back-btn {
   position: absolute; top: 6px; right: 10px; padding: 4px 10px;

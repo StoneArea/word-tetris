@@ -117,6 +117,7 @@
       <div class="game-header">
         <div class="game-stat"><span class="label">점수</span><span id="score">0</span></div>
         <div class="game-stat"><span class="label">콤보</span><span id="combo">0</span></div>
+        <div class="game-stat next-preview"><span class="label">NEXT</span><canvas id="next-canvas" width="60" height="48"></canvas></div>
         <div class="game-stat"><span class="label">레벨</span><span id="level">1</span></div>
         <div class="game-stat"><span class="label">라인</span><span id="lines">0</span></div>
       </div>
@@ -134,13 +135,17 @@
         </div>
       </div>
 
-      <!-- 모바일 컨트롤 -->
+      <!-- 모바일 컨트롤 (양손 배치) -->
       <div class="mobile-controls">
-        <button class="ctrl-btn" id="ctrl-left">◀</button>
-        <button class="ctrl-btn" id="ctrl-down">▼</button>
-        <button class="ctrl-btn" id="ctrl-rotate">↻</button>
-        <button class="ctrl-btn" id="ctrl-right">▶</button>
+        <div class="ctrl-group-left">
+          <button class="ctrl-btn" id="ctrl-left">◀</button>
+          <button class="ctrl-btn" id="ctrl-right">▶</button>
+        </div>
         <button class="ctrl-btn ctrl-drop" id="ctrl-drop">⏬</button>
+        <div class="ctrl-group-right">
+          <button class="ctrl-btn" id="ctrl-rotate">↻</button>
+          <button class="ctrl-btn" id="ctrl-down">▼</button>
+        </div>
       </div>
 
       <button id="back-btn" class="back-btn" onclick="confirmExit()">✕</button>
