@@ -31,6 +31,7 @@ let pendingLines;
 let quizQueue; // 연속 퀴즈 큐
 let pendingLineCount; // 현재 클리어할 줄 수
 let effects; // 시각 효과
+let quizTimerId; // 퀴즈 타이머
 
 // ===== 초기화 =====
 function startGame(words, book, name) {
@@ -224,15 +225,14 @@ var quizTotalInSequence = 0;
 
 function showNextQuiz(lineCount) {
   if (quizQueue.length === 0) {
-    // 모든 퀴즈 완료
     finishQuizSequence(lineCount);
     return;
   }
 
-  var word = quizQueue.shift();
-  quizTotalInSequence = (quizTotalInSequence || 0);
-  var remaining = quizQueue.length + 1;
+  if (quizTimerId) { clearTimeout(quizTimerId); quizTimerId = null; }
+  var answered = false;
 
+  var word = quizQueue.shift();
   var overlay = document.getElementById('quiz-overlay');
   var meaningEl = document.getElementById('quiz-meaning');
   var choicesEl = document.getElementById('quiz-choices');
@@ -245,6 +245,19 @@ function showNextQuiz(lineCount) {
   meaningEl.textContent = word.meaning + quizNum;
   feedbackEl.textContent = '';
 
+  // 5초 타이머 (시간 초과 시 오답 처리)
+  quizTimerId = setTimeout(function() {
+    if (answered) return;
+    answered = true;
+    if (handler) document.getElementById('quiz-input').removeEventListener('keydown', handler);
+    choicesEl.querySelectorAll('.quiz-choice-btn').forEach(function(b) { b.style.pointerEvents = 'none'; });
+    var correctBtn = choicesEl.querySelector('[data-word="' + word.word + '"]');
+    if (correctBtn) correctBtn.classList.add('correct');
+    onSingleQuizWrong(word, lineCount, word.word);
+  }, 5000);
+
+  var handler = null;
+
   if (level >= 7) {
     // 타이핑
     choicesEl.classList.add('hidden');
@@ -254,9 +267,11 @@ function showNextQuiz(lineCount) {
     overlay.classList.remove('hidden');
     setTimeout(function() { input.focus(); }, 100);
 
-    var handler = function(e) {
-      if (e.key !== 'Enter') return;
+    handler = function(e) {
+      if (e.key !== 'Enter' || answered) return;
       e.preventDefault();
+      answered = true;
+      clearTimeout(quizTimerId);
       input.removeEventListener('keydown', handler);
       var ans = input.value.trim().toLowerCase();
       var correct = word.word.toLowerCase();
@@ -289,7 +304,9 @@ function showNextQuiz(lineCount) {
 
     choicesEl.querySelectorAll('.quiz-choice-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        if (btn.classList.contains('correct') || btn.classList.contains('wrong')) return;
+        if (answered || btn.classList.contains('correct') || btn.classList.contains('wrong')) return;
+        answered = true;
+        clearTimeout(quizTimerId);
         choicesEl.querySelectorAll('.quiz-choice-btn').forEach(function(b) { b.style.pointerEvents = 'none'; });
         if (btn.dataset.word === correct) {
           btn.classList.add('correct');
