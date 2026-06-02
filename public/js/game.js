@@ -160,7 +160,7 @@ function lockPiece() {
     pendingLines = full;
     pendingLineCount = full.length;
     // 줄 수에 따라 퀴즈 수 결정: 1줄=1문제, 2줄=2문제, 3줄=2문제, 4줄(테트리스)=3문제
-    var quizCount = [0, 1, 2, 2, 3][full.length] || full.length;
+    var quizCount = [0, 1, 2, 3, 5][full.length] || full.length;
     startQuizSequence(quizCount, full.length);
   } else {
     nextTurn();
@@ -239,7 +239,7 @@ function showNextQuiz(lineCount) {
   var typingEl = document.getElementById('quiz-typing');
   var feedbackEl = document.getElementById('quiz-feedback');
 
-  var quizTotal = [0, 1, 2, 2, 3][pendingLineCount] || pendingLineCount;
+  var quizTotal = [0, 1, 2, 3, 5][pendingLineCount] || pendingLineCount;
   var quizCurrent = quizTotal - quizQueue.length;
   var quizNum = quizTotal >= 2 ? ' (' + quizCurrent + '/' + quizTotal + ')' : '';
   meaningEl.textContent = word.meaning + quizNum;
@@ -357,7 +357,7 @@ function finishQuizSequence(lineCount) {
     // 정답이 하나라도 있으면 라인 클리어
     clearLines(pendingLines);
     // 전문 정답 보너스
-    var quizTotal = [0, 1, 2, 2, 3][lineCount] || lineCount;
+    var quizTotal = [0, 1, 2, 3, 5][lineCount] || lineCount;
     if (quizCorrectInSequence === quizTotal && quizTotal > 1) {
       var perfectBonus = lineCount * 200 * level;
       score += perfectBonus;
