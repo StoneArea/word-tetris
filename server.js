@@ -138,7 +138,7 @@ app.get('/api/words', (req, res) => {
   const params = [book, ...dayList];
   if (types) {
     const tl = types.split(',').filter(Boolean);
-    if (tl.length) { q += ` AND word_type IN (${tl.map(() => '?').join(',')})`; params.push(...tl); }
+    if (tl.length) { q += ` AND (word_type IN (${tl.map(() => '?').join(',')}) OR word_type IS NULL OR word_type = '')`; params.push(...tl); }
   }
   q += ' ORDER BY day, id';
   res.json(wordsDb.prepare(q).all(...params));
