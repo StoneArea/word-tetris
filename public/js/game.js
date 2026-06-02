@@ -258,7 +258,11 @@ function showNextQuiz(lineCount) {
 
   var handler = null;
 
-  if (level >= 7) {
+  // 레벨별 타이핑 확률: 1~3=0%, 4~5=20%, 6~7=40%, 8~9=60%, 10+=80%
+  var typingChance = level <= 3 ? 0 : level <= 5 ? 0.2 : level <= 7 ? 0.4 : level <= 9 ? 0.6 : 0.8;
+  var useTyping = Math.random() < typingChance;
+
+  if (useTyping) {
     // 타이핑
     choicesEl.classList.add('hidden');
     typingEl.classList.remove('hidden');
