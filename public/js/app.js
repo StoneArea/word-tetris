@@ -62,12 +62,15 @@ function parseBooks(bookStr) {
 const YOIL = { '월':1,'화':2,'수':3,'목':4,'금':5,'토':6,'일':0 };
 
 // ===== 진도 계산 =====
+// 원본 Python: step = (day_speed - overlap), 매 수업일마다 step만큼 진행
+// overlap은 앞 수업과 겹치는 과 수 (예: speed=3, overlap=1 → 매일 2과씩 진행, 3과 출제)
 function calcChapter(student, targetDateStr) {
   const sd = pDate(student.startDate);
   if (!sd) return null;
   const startChap = parseInt(student.startChapter) || 1;
   const speed = parseInt(student.speed) || 1;
   const overlap = parseInt(student.overlap) || 0;
+  const step = Math.max(1, speed - overlap); // 매 수업일 실제 진행량
 
   const weekdays = [];
   for (const c of (student.days || '')) { if (YOIL[c] !== undefined) weekdays.push(YOIL[c]); }
@@ -86,10 +89,10 @@ function calcChapter(student, targetDateStr) {
     cur.setDate(cur.getDate() + 1);
   }
 
-  const progress = (classDays - 1) * speed;
-  const chapStart = startChap + progress - overlap;
+  const totalProgress = (classDays - 1) * step; // step 단위로 누적
+  const chapStart = startChap + totalProgress;
   const chapEnd = chapStart + speed - 1;
-  return { start: Math.max(1, chapStart), end: chapEnd, speed };
+  return { start: Math.max(1, chapStart), end: chapEnd, speed, step };
 }
 
 function pDate(s) {
@@ -268,12 +271,13 @@ function buildDayChips(student, books) {
   if (!info) { chips.innerHTML = '<span style="color:var(--text-dim);font-size:0.85em">진도 계산 불가</span>'; return; }
 
   const speed = info.speed;
+  const step = info.step || Math.max(1, speed);
   const rangeCheck = document.getElementById('range-mode');
 
-  // 앞뒤 3일분 + 오늘
+  // 앞뒤 3일분 + 오늘 (step 단위로 이동)
   const allChips = [];
   for (let offset = -3; offset <= 3; offset++) {
-    const dayStart = info.start + offset * speed;
+    const dayStart = info.start + offset * step;
     const dayEnd = dayStart + speed - 1;
     if (dayStart < 1) continue;
     const isToday = offset === 0;
