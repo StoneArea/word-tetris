@@ -188,7 +188,7 @@ body {
   flex: 1; display: flex; justify-content: center; align-items: center;
   position: relative; overflow: hidden;
 }
-#game-canvas { border: 2px solid var(--border); border-radius: 6px; background: #0a0a1a; }
+#game-canvas { border: 2px solid var(--border); border-radius: 6px; background: #0a0a1a; max-width: 100%; height: auto; }
 
 /* 퀴즈 오버레이 */
 .quiz-overlay {

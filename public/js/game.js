@@ -37,13 +37,15 @@ function startGame(words, book, name) {
   canvas = document.getElementById('game-canvas');
   ctx = canvas.getContext('2d');
 
-  const area = document.querySelector('.game-area');
-  const maxH = area.clientHeight - 10;
-  const cellFromH = Math.floor(maxH / ROWS);
-  cellSize = Math.min(cellFromH, 28);
+  var area = document.querySelector('.game-area');
+  var maxH = area.clientHeight - 10;
+  var maxW = area.clientWidth - 10;
+  var cellFromH = Math.floor(maxH / ROWS);
+  var cellFromW = Math.floor(maxW / (COLS + 4)); // 게임판 + 미리보기 4칸
+  cellSize = Math.min(cellFromH, cellFromW, 28);
 
   // 캔버스: 게임판 + 다음블록 영역
-  const previewW = cellSize * 5;
+  var previewW = cellSize * 4;
   canvasW = cellSize * COLS + previewW;
   canvasH = cellSize * ROWS;
   canvas.width = canvasW;
