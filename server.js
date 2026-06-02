@@ -169,18 +169,61 @@ app.get('/api/history/:name', async (req, res) => {
   } catch { res.json([]); }
 });
 
-// 랭킹 저장
-app.post('/api/rankings', (req, res) => {
+// KST 시간 헬퍼
+function kstNow() {
+  const d = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  return d.toISOString().slice(0, 19).replace('T', ' ');
+}
+function kstToday() {
+  const d = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  return d.toISOString().slice(0, 10);
+}
+
+// 랭킹 저장 (Firebase에 영구 저장)
+app.post('/api/rankings', async (req, res) => {
   const { name, book, score, correct, wrong, maxCombo, mode } = req.body;
   if (!name || score == null) return res.status(400).json({ error: 'missing fields' });
+
+  const record = {
+    name, book: book || '', score, correct: correct || 0, wrong: wrong || 0,
+    max_combo: maxCombo || 0, mode: mode || '', created_at: kstNow(), date: kstToday()
+  };
+
+  // SQLite (로컬 캐시)
   rankDb.prepare('INSERT INTO rankings (name, book, score, correct, wrong, max_combo, mode, created_at) VALUES (?,?,?,?,?,?,?,?)')
-    .run(name, book || '', score, correct || 0, wrong || 0, maxCombo || 0, mode || '', new Date().toISOString().slice(0, 19).replace('T', ' '));
+    .run(record.name, record.book, record.score, record.correct, record.wrong, record.max_combo, record.mode, record.created_at);
+
+  // Firebase (영구 저장)
+  try {
+    if (!idToken) await refreshIdToken();
+    const body = JSON.stringify(record);
+    const url = new URL(`${FIREBASE_DB_URL}/${BASE_PATH}/game_rankings.json?auth=${idToken}`);
+    const postReq = https.request({ hostname: url.hostname, path: url.pathname + url.search, method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+    }, () => {});
+    postReq.write(body); postReq.end();
+  } catch {}
+
   res.json({ ok: true });
 });
 
-// 오늘 랭킹
-app.get('/api/rankings/today', (req, res) => {
-  const today = new Date().toISOString().slice(0, 10);
+// 오늘 랭킹 (Firebase에서 조회)
+app.get('/api/rankings/today', async (req, res) => {
+  const today = kstToday();
+
+  // 먼저 Firebase에서 시도
+  try {
+    const data = await firebaseFetch(`${BASE_PATH}/game_rankings`);
+    if (data) {
+      const rows = Object.values(data)
+        .filter(r => r && r.date === today)
+        .sort((a, b) => (b.score || 0) - (a.score || 0))
+        .slice(0, 30);
+      return res.json(rows);
+    }
+  } catch {}
+
+  // 폴백: 로컬 SQLite
   const rows = rankDb.prepare(
     `SELECT name, book, score, correct, wrong, max_combo, mode, created_at
      FROM rankings WHERE created_at LIKE ? ORDER BY score DESC LIMIT 30`
