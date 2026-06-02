@@ -74,8 +74,9 @@ function calcChapter(student, targetDateStr) {
   const allDays = weekdays.length === 0;
 
   let classDays = 0;
-  const target = new Date(targetDateStr + 'T00:00:00');
-  const cur = new Date(sd);
+  const tp = targetDateStr.split('-');
+  const target = new Date(parseInt(tp[0]), parseInt(tp[1]) - 1, parseInt(tp[2]));
+  const cur = new Date(sd.getTime());
   if (target < cur) return null;
 
   while (cur <= target) {
@@ -93,11 +94,13 @@ function calcChapter(student, targetDateStr) {
 
 function pDate(s) {
   if (!s) return null;
-  const d = new Date(s.replace(/[./]/g,'-').trim() + 'T00:00:00');
+  const parts = s.replace(/[./]/g,'-').trim().split('-');
+  if (parts.length < 3) return null;
+  const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
   return isNaN(d.getTime()) ? null : d;
 }
 function fDate(d) {
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
 // ===== 초기화 =====
@@ -111,7 +114,16 @@ async function init() {
   document.getElementById('loading').classList.add('hidden');
 
   setupSearch();
+  setupModeButtons();
   loadRankings();
+}
+
+function setupModeButtons() {
+  document.querySelectorAll('.big-mode-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      selectMode(btn.dataset.mode);
+    });
+  });
 }
 
 // ===== 검색 =====
