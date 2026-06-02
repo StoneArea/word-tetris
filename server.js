@@ -16,7 +16,7 @@ const BASE_PATH = `academies/${ACADEMY}/${BRANCH}`;
 
 // --- 인증 토큰 ---
 let idToken = null;
-let currentRefreshToken = process.env.FIREBASE_REFRESH_TOKEN || '';
+let currentRefreshToken = (process.env.FIREBASE_REFRESH_TOKEN || '').trim();
 const LOGIN_CONFIG_PATH = path.join(__dirname, 'login_config.json');
 
 function loadRefreshToken() {
@@ -35,8 +35,9 @@ function saveRefreshToken(t) {
 function refreshIdToken() {
   return new Promise((resolve, reject) => {
     const rt = loadRefreshToken();
-    if (!rt) return reject(new Error('No refresh token'));
-    const body = JSON.stringify({ grant_type: 'refresh_token', refresh_token: rt });
+    if (!rt) return reject(new Error('No refresh token - env: ' + (process.env.FIREBASE_REFRESH_TOKEN ? 'SET(' + process.env.FIREBASE_REFRESH_TOKEN.length + 'chars)' : 'NOT SET')));
+    console.log('Refreshing token, rt length:', rt.length);
+    const body = JSON.stringify({ grant_type: 'refresh_token', refresh_token: rt.trim() });
     const req = https.request({
       hostname: 'securetoken.googleapis.com', path: `/v1/token?key=${FIREBASE_API_KEY}`,
       method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
@@ -46,8 +47,8 @@ function refreshIdToken() {
         try {
           const j = JSON.parse(d);
           if (j.id_token) { idToken = j.id_token; if (j.refresh_token) saveRefreshToken(j.refresh_token); resolve(idToken); }
-          else reject(new Error('Token refresh failed'));
-        } catch (e) { reject(e); }
+          else { console.error('Token response:', JSON.stringify(j).slice(0, 200)); reject(new Error('Token refresh failed')); }
+        } catch (e) { console.error('Token parse error:', d.slice(0, 200)); reject(e); }
       });
     });
     req.on('error', reject); req.write(body); req.end();
