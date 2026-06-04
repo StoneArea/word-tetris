@@ -246,6 +246,7 @@ function showNextQuiz(lineCount) {
   feedbackEl.textContent = '';
 
   var handler = null;
+  var choiceKeyHandler = null;
 
   // 레벨별 타이핑 확률: 1~3=0%, 4~5=20%, 6~7=40%, 8~9=60%, 10+=80%
   var typingChance = level <= 3 ? 0 : level <= 5 ? 0.2 : level <= 7 ? 0.4 : level <= 9 ? 0.6 : 0.8;
@@ -257,6 +258,7 @@ function showNextQuiz(lineCount) {
     if (answered) return;
     answered = true;
     if (handler) document.getElementById('quiz-input').removeEventListener('keydown', handler);
+    if (choiceKeyHandler) document.removeEventListener('keydown', choiceKeyHandler);
     choicesEl.querySelectorAll('.quiz-choice-btn').forEach(function(b) { b.style.pointerEvents = 'none'; });
     var correctBtn = choicesEl.querySelector('[data-word="' + word.word + '"]');
     if (correctBtn) correctBtn.classList.add('correct');
@@ -301,29 +303,45 @@ function showNextQuiz(lineCount) {
     while (choices.length < 4) choices.push('---');
     var shuffled = choices.sort(function() { return Math.random() - 0.5; });
 
-    choicesEl.innerHTML = shuffled.map(function(w) {
-      return '<button class="quiz-choice-btn" data-word="' + w + '">' + w + '</button>';
+    choicesEl.innerHTML = shuffled.map(function(w, i) {
+      return '<button class="quiz-choice-btn" data-word="' + w + '" data-idx="' + (i+1) + '"><span class="choice-num">' + (i+1) + '</span> ' + w + '</button>';
     }).join('');
 
     overlay.classList.remove('hidden');
 
-    choicesEl.querySelectorAll('.quiz-choice-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        if (answered || btn.classList.contains('correct') || btn.classList.contains('wrong')) return;
-        answered = true;
-        clearTimeout(quizTimerId);
-        choicesEl.querySelectorAll('.quiz-choice-btn').forEach(function(b) { b.style.pointerEvents = 'none'; });
-        if (btn.dataset.word === correct) {
-          btn.classList.add('correct');
-          onSingleQuizCorrect(word, lineCount);
-        } else {
-          btn.classList.add('wrong');
-          var correctBtn = choicesEl.querySelector('[data-word="' + correct + '"]');
-          if (correctBtn) correctBtn.classList.add('correct');
-          onSingleQuizWrong(word, lineCount, correct);
-        }
-      });
+    var pickChoice = function(idx) {
+      var btns = choicesEl.querySelectorAll('.quiz-choice-btn');
+      if (idx < 0 || idx >= btns.length) return;
+      var btn = btns[idx];
+      if (answered || btn.classList.contains('correct') || btn.classList.contains('wrong')) return;
+      answered = true;
+      clearTimeout(quizTimerId);
+      btns.forEach(function(b) { b.style.pointerEvents = 'none'; });
+      if (btn.dataset.word === correct) {
+        btn.classList.add('correct');
+        onSingleQuizCorrect(word, lineCount);
+      } else {
+        btn.classList.add('wrong');
+        var correctBtn = choicesEl.querySelector('[data-word="' + correct + '"]');
+        if (correctBtn) correctBtn.classList.add('correct');
+        onSingleQuizWrong(word, lineCount, correct);
+      }
+    };
+
+    choicesEl.querySelectorAll('.quiz-choice-btn').forEach(function(btn, i) {
+      btn.addEventListener('click', function() { pickChoice(i); });
     });
+
+    // 키보드 1,2,3,4로 선택
+    var choiceKeyHandler = function(e) {
+      var num = parseInt(e.key);
+      if (num >= 1 && num <= 4) {
+        e.preventDefault();
+        document.removeEventListener('keydown', choiceKeyHandler);
+        pickChoice(num - 1);
+      }
+    };
+    document.addEventListener('keydown', choiceKeyHandler);
   }
 }
 
