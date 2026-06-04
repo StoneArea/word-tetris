@@ -21,11 +21,20 @@
         <div id="search-results" class="search-results hidden"></div>
       </div>
 
-      <!-- 오늘의 랭킹 -->
-      <div id="ranking-section" class="ranking-section">
-        <h3>🏆 오늘의 랭킹</h3>
-        <div id="ranking-list" class="ranking-list">
-          <p class="empty-msg">아직 기록이 없습니다</p>
+      <div class="home-rankings">
+        <!-- 오늘의 랭킹 -->
+        <div id="ranking-section" class="ranking-section">
+          <h3>🏆 오늘의 랭킹</h3>
+          <div id="ranking-list" class="ranking-list">
+            <p class="empty-msg">아직 기록이 없습니다</p>
+          </div>
+        </div>
+        <!-- 주간 명예의 전당 -->
+        <div id="weekly-section" class="ranking-section">
+          <h3>👑 이번주 TOP</h3>
+          <div id="weekly-list" class="ranking-list">
+            <p class="empty-msg">기록 없음</p>
+          </div>
         </div>
       </div>
 
@@ -61,6 +70,18 @@
             </label>
           </div>
           <div id="day-chips" class="day-chips"></div>
+        </div>
+
+        <!-- 자유 도전 -->
+        <div class="free-challenge">
+          <details id="free-challenge-detail">
+            <summary>📚 다른 단어장 도전</summary>
+            <select id="free-book-select"><option value="">단어장 선택...</option></select>
+            <div id="free-range" class="free-range hidden">
+              <span id="free-range-info"></span>
+              <button id="free-all-btn" class="free-btn">전체 범위 선택</button>
+            </div>
+          </details>
         </div>
 
         <!-- 모드 선택 -->

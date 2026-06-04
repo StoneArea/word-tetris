@@ -482,7 +482,7 @@ function gameOver() {
     wl.classList.add('hidden');
   }
 
-  saveRanking(gameName, gameBook, score, correctCount, wrongCount, maxCombo, 'tetris');
+  saveRanking(gameName, gameBook, score, correctCount, wrongCount, maxCombo, 'tetris', currentDaysRange);
   showScreen('result-screen');
 }
 

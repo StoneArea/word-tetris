@@ -181,12 +181,13 @@ function kstToday() {
 
 // 랭킹 저장 (Firebase에 영구 저장)
 app.post('/api/rankings', async (req, res) => {
-  const { name, book, score, correct, wrong, maxCombo, mode } = req.body;
+  const { name, book, score, correct, wrong, maxCombo, mode, daysRange } = req.body;
   if (!name || score == null) return res.status(400).json({ error: 'missing fields' });
 
   const record = {
     name, book: book || '', score, correct: correct || 0, wrong: wrong || 0,
-    max_combo: maxCombo || 0, mode: mode || '', created_at: kstNow(), date: kstToday()
+    max_combo: maxCombo || 0, mode: mode || '', days_range: daysRange || '',
+    created_at: kstNow(), date: kstToday()
   };
 
   // SQLite (로컬 캐시)
@@ -228,6 +229,35 @@ app.get('/api/rankings/today', async (req, res) => {
     `SELECT name, book, score, correct, wrong, max_combo, mode, created_at
      FROM rankings WHERE created_at LIKE ? ORDER BY score DESC LIMIT 30`
   ).all(today + '%');
+  res.json(rows);
+});
+
+// 주간 최고 기록 (Firebase에서 조회)
+app.get('/api/rankings/weekly-top', async (req, res) => {
+  const now = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const weekAgoStr = weekAgo.toISOString().slice(0, 10);
+
+  try {
+    const data = await firebaseFetch(`${BASE_PATH}/game_rankings`);
+    if (data) {
+      const rows = Object.values(data)
+        .filter(r => r && r.date && r.date >= weekAgoStr)
+        .sort((a, b) => (b.score || 0) - (a.score || 0));
+      // 이름당 최고 점수만
+      const best = {};
+      for (const r of rows) {
+        if (!best[r.name] || r.score > best[r.name].score) best[r.name] = r;
+      }
+      return res.json(Object.values(best).sort((a, b) => b.score - a.score).slice(0, 5));
+    }
+  } catch {}
+  res.json([]);
+});
+
+// 전체 단어장 목록
+app.get('/api/books', (req, res) => {
+  const rows = wordsDb.prepare('SELECT book_name, COUNT(*) as cnt, MIN(CAST(day AS INTEGER)) as minDay, MAX(CAST(day AS INTEGER)) as maxDay FROM words GROUP BY book_name ORDER BY book_name').all();
   res.json(rows);
 });
 

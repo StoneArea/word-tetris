@@ -6,6 +6,9 @@ let selectedMode = null;
 let holidays = [];
 let currentWords = [];
 let studyWords = [];
+let currentDaysRange = '';
+let currentBookShort = '';
+let allBooks = [];
 
 // ===== 화면 전환 =====
 function showScreen(id) {
@@ -119,6 +122,8 @@ async function init() {
   setupSearch();
   setupModeButtons();
   loadRankings();
+  loadWeeklyTop();
+  loadFreeBooks();
 }
 
 function setupModeButtons() {
@@ -169,10 +174,31 @@ async function loadRankings() {
     list.innerHTML = data.map((r, i) => {
       const cls = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
       const time = (r.created_at || '').split(' ')[1]?.slice(0,5) || '';
+      const range = r.days_range ? ' ' + r.days_range : '';
       return `<div class="rank-item">
         <span class="rank-num ${cls}">${i+1}</span>
         <div class="rank-info"><span class="rank-name">${r.name}</span>
-          <span class="rank-book">${r.book} ${time}</span></div>
+          <span class="rank-book">${r.book}${range} ${time}</span></div>
+        <span class="rank-score">${r.score}</span>
+      </div>`;
+    }).join('');
+  } catch {}
+}
+
+async function loadWeeklyTop() {
+  try {
+    const res = await fetch('/api/rankings/weekly-top');
+    const data = await res.json();
+    const list = document.getElementById('weekly-list');
+    if (!data.length) { list.innerHTML = '<p class="empty-msg">기록 없음</p>'; return; }
+    list.innerHTML = data.map((r, i) => {
+      const cls = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+      const range = r.days_range ? ' ' + r.days_range : '';
+      return `<div class="rank-item">
+        <span class="rank-num ${cls}">${i+1}</span>
+        <div class="rank-info"><span class="rank-name">${r.name}</span>
+          <span class="rank-book">${r.book}${range}</span>
+          <span class="rank-range">${r.date || ''}</span></div>
         <span class="rank-score">${r.score}</span>
       </div>`;
     }).join('');
@@ -359,16 +385,27 @@ document.getElementById('start-btn')?.addEventListener('click', launchGame);
 
 async function launchGame() {
   if (!selectedStudent || !selectedDays.length || !selectedMode) return;
-  const books = parseBooks(selectedStudent.book);
-  if (!books.length) return;
 
-  const bookFull = books[0].full;
+  // 자유 도전 모드 체크
+  const freeSelect = document.getElementById('free-book-select');
+  const freeBook = freeSelect ? freeSelect.value : '';
+  let bookFull, bookShort;
 
-  // 표제어/파생어: 학생 상태 필드에서 자동 결정
-  // status에 'p'가 있으면 표제어만, 기본은 둘 다
+  if (freeBook) {
+    bookFull = freeBook;
+    // 단축어 역탐색
+    bookShort = Object.keys(BOOK_MAP).find(k => BOOK_MAP[k] === freeBook) || freeBook.slice(0, 10);
+  } else {
+    const books = parseBooks(selectedStudent.book);
+    if (!books.length) return;
+    bookFull = books[0].full;
+    bookShort = books[0].short;
+  }
+
+  // 표제어/파생어
   const status = (selectedStudent.status || '').toLowerCase();
   let types = '표제어,파생어';
-  if (status.includes('p') && !status.includes('v')) types = '표제어';
+  if (!freeBook && status.includes('p') && !status.includes('v')) types = '표제어';
 
   const url = `/api/words?book=${encodeURIComponent(bookFull)}&days=${selectedDays.join(',')}&types=${types}`;
   const res = await fetch(url);
@@ -376,11 +413,16 @@ async function launchGame() {
 
   if (!currentWords.length) { alert('해당 범위에 단어가 없습니다.'); return; }
 
+  // 범위 기록
+  const sorted = [...selectedDays].sort((a,b) => a - b);
+  currentDaysRange = sorted[0] === sorted[sorted.length-1] ? sorted[0] + '과' : sorted[0] + '~' + sorted[sorted.length-1] + '과';
+  currentBookShort = bookShort;
+
   if (selectedMode === 'study') {
     startStudyMode(currentWords);
   } else {
     showScreen('game-screen');
-    startGame(currentWords, books[0].short, selectedStudent.name);
+    startGame(currentWords, bookShort, selectedStudent.name);
   }
 }
 
@@ -474,13 +516,56 @@ function confirmExit() {
 
 function retryGame() { launchGame(); }
 
-async function saveRanking(name, book, score, correct, wrong, maxCombo, mode) {
+async function saveRanking(name, book, score, correct, wrong, maxCombo, mode, daysRange) {
   try {
     await fetch('/api/rankings', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, book, score, correct, wrong, maxCombo, mode })
+      body: JSON.stringify({ name, book, score, correct, wrong, maxCombo, mode, daysRange })
     });
+    loadRankings();
+    loadWeeklyTop();
   } catch {}
+}
+
+// ===== 자유 도전 =====
+async function loadFreeBooks() {
+  try {
+    const res = await fetch('/api/books');
+    allBooks = await res.json();
+    const select = document.getElementById('free-book-select');
+    if (!select) return;
+    allBooks.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.book_name;
+      opt.textContent = b.book_name + ' (' + b.minDay + '~' + b.maxDay + '과)';
+      select.appendChild(opt);
+    });
+    select.addEventListener('change', onFreeBookChange);
+    document.getElementById('free-all-btn')?.addEventListener('click', onFreeAllRange);
+  } catch {}
+}
+
+function onFreeBookChange() {
+  const select = document.getElementById('free-book-select');
+  const rangeDiv = document.getElementById('free-range');
+  const book = allBooks.find(b => b.book_name === select.value);
+  if (!book) { rangeDiv.classList.add('hidden'); return; }
+  document.getElementById('free-range-info').textContent = book.minDay + '~' + book.maxDay + '과';
+  rangeDiv.classList.remove('hidden');
+}
+
+function onFreeAllRange() {
+  const select = document.getElementById('free-book-select');
+  const book = allBooks.find(b => b.book_name === select.value);
+  if (!book) return;
+  // 전체 범위를 selectedDays에 설정
+  selectedDays = [];
+  for (let d = book.minDay; d <= book.maxDay; d++) selectedDays.push(d);
+  // 기존 day-chips 클리어하고 자유 도전 범위 표시
+  const chips = document.getElementById('day-chips');
+  chips.innerHTML = '<span style="color:var(--accent);font-size:0.85em">' + book.book_name + ' 전체 (' + book.minDay + '~' + book.maxDay + '과)</span>';
+  document.getElementById('range-mode').checked = false;
+  updateStartBtn();
 }
 
 // ===== 시작 =====

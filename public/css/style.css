@@ -55,7 +55,8 @@ body {
 .search-result-item .detail { font-size: 0.82em; color: var(--text-dim); }
 
 /* 랭킹 */
-.ranking-section { width: 100%; max-width: 360px; margin-top: 24px; }
+.home-rankings { display: flex; gap: 12px; width: 100%; max-width: 600px; margin-top: 24px; }
+.ranking-section { flex: 1; min-width: 0; }
 .ranking-section h3 { font-size: 1em; margin-bottom: 10px; }
 .ranking-list { background: var(--card); border-radius: 12px; padding: 12px; max-height: 300px; overflow-y: auto; }
 .empty-msg { color: var(--text-dim); text-align: center; font-size: 0.9em; padding: 16px; }
@@ -70,6 +71,7 @@ body {
 .rank-name { font-weight: 600; }
 .rank-book { font-size: 0.8em; color: var(--text-dim); }
 .rank-score { font-weight: 700; color: var(--accent); }
+.rank-range { font-size: 0.75em; color: var(--text-dim); }
 
 .loading { text-align: center; margin-top: 30px; }
 .loading.hidden { display: none; }
@@ -114,6 +116,21 @@ body {
 .range-toggle input { accent-color: var(--accent); }
 
 .day-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* 자유 도전 */
+.free-challenge { margin-bottom: 16px; }
+.free-challenge details { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; }
+.free-challenge summary { cursor: pointer; font-size: 0.9em; color: var(--text-dim); font-weight: 600; }
+.free-challenge select {
+  width: 100%; margin-top: 8px; padding: 8px 10px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 0.85em;
+}
+.free-range { margin-top: 8px; display: flex; align-items: center; gap: 8px; font-size: 0.82em; }
+.free-range span { color: var(--text-dim); }
+.free-btn {
+  padding: 6px 12px; border-radius: 8px; border: 1px solid var(--accent);
+  background: rgba(0,212,255,0.1); color: var(--accent); font-size: 0.82em; cursor: pointer;
+}
 .day-chip {
   padding: 6px 12px; border-radius: 16px; border: 1.5px solid var(--border);
   background: transparent; color: var(--text); cursor: pointer; font-size: 0.82em;
