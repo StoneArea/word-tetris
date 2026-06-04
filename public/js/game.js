@@ -38,9 +38,14 @@ function startGame(words, book, name) {
   canvas = document.getElementById('game-canvas');
   ctx = canvas.getContext('2d');
 
-  var area = document.querySelector('.game-area');
-  var maxH = area.clientHeight - 10;
-  var maxW = area.clientWidth - 10;
+  // 헤더, 컨트롤러 높이를 빼고 캔버스 영역 계산
+  var header = document.querySelector('.game-header');
+  var controls = document.querySelector('.mobile-controls');
+  var screenH = window.innerHeight;
+  var headerH = header ? header.offsetHeight : 0;
+  var ctrlH = controls && controls.offsetParent !== null ? controls.offsetHeight : 0;
+  var maxH = screenH - headerH - ctrlH - 16;
+  var maxW = window.innerWidth - 16;
   var cellFromH = Math.floor(maxH / ROWS);
   var cellFromW = Math.floor(maxW / COLS);
   cellSize = Math.min(cellFromH, cellFromW, 28);
