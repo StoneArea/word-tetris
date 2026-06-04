@@ -417,19 +417,28 @@ function showStudyCard() {
 }
 
 function flipCard() {
-  if (studyFlipped) return;
-  studyFlipped = true;
-  document.querySelector('.card-front').classList.add('hidden');
-  document.querySelector('.card-back').classList.remove('hidden');
+  // 토글: 앞↔뒤 반복 가능
+  studyFlipped = !studyFlipped;
+  if (studyFlipped) {
+    document.querySelector('.card-front').classList.add('hidden');
+    document.querySelector('.card-back').classList.remove('hidden');
+  } else {
+    document.querySelector('.card-front').classList.remove('hidden');
+    document.querySelector('.card-back').classList.add('hidden');
+  }
 }
 
 function markCard(known) {
-  if (!studyFlipped) flipCard();
+  if (!studyFlipped) {
+    // 아직 안 뒤집었으면 뒤집기만 하고 넘기지 않음
+    flipCard();
+    return;
+  }
   const w = studyWords[studyIdx];
   if (known) studyKnown.push(w);
   else studyUnknown.push(w);
   studyIdx++;
-  setTimeout(showStudyCard, 200);
+  showStudyCard();
 }
 
 function finishStudy() {

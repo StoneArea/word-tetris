@@ -245,7 +245,14 @@ function showNextQuiz(lineCount) {
   meaningEl.textContent = word.meaning + quizNum;
   feedbackEl.textContent = '';
 
-  // 5초 타이머 (시간 초과 시 오답 처리)
+  var handler = null;
+
+  // 레벨별 타이핑 확률: 1~3=0%, 4~5=20%, 6~7=40%, 8~9=60%, 10+=80%
+  var typingChance = level <= 3 ? 0 : level <= 5 ? 0.2 : level <= 7 ? 0.4 : level <= 9 ? 0.6 : 0.8;
+  var useTyping = Math.random() < typingChance;
+
+  // 타이머: 타이핑 10초, 4지선다 5초
+  var timeLimit = useTyping ? 10000 : 5000;
   quizTimerId = setTimeout(function() {
     if (answered) return;
     answered = true;
@@ -254,13 +261,7 @@ function showNextQuiz(lineCount) {
     var correctBtn = choicesEl.querySelector('[data-word="' + word.word + '"]');
     if (correctBtn) correctBtn.classList.add('correct');
     onSingleQuizWrong(word, lineCount, word.word);
-  }, 5000);
-
-  var handler = null;
-
-  // 레벨별 타이핑 확률: 1~3=0%, 4~5=20%, 6~7=40%, 8~9=60%, 10+=80%
-  var typingChance = level <= 3 ? 0 : level <= 5 ? 0.2 : level <= 7 ? 0.4 : level <= 9 ? 0.6 : 0.8;
-  var useTyping = Math.random() < typingChance;
+  }, timeLimit);
 
   if (useTyping) {
     // 타이핑
