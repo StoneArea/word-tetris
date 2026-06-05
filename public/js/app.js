@@ -1,3 +1,44 @@
+// ===== 폴리필 =====
+if (!String.prototype.padStart) {
+  String.prototype.padStart = function(len, ch) {
+    var s = String(this);
+    ch = ch || ' ';
+    while (s.length < len) s = ch + s;
+    return s;
+  };
+}
+if (!Array.prototype.find) {
+  Array.prototype.find = function(fn) {
+    for (var i = 0; i < this.length; i++) { if (fn(this[i], i, this)) return this[i]; }
+    return undefined;
+  };
+}
+if (!Array.prototype.includes) {
+  Array.prototype.includes = function(v) { return this.indexOf(v) >= 0; };
+}
+if (!Element.prototype.closest) {
+  Element.prototype.closest = function(sel) {
+    var el = this;
+    while (el && el !== document) {
+      if (el.matches(sel)) return el;
+      el = el.parentElement;
+    }
+    return null;
+  };
+}
+
+// 전역 에러 핸들러 (디버깅)
+window.onerror = function(msg, url, line, col, err) {
+  var el = document.getElementById('debug-error');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'debug-error';
+    el.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:red;color:white;padding:8px;font-size:12px;z-index:9999;max-height:120px;overflow:auto;';
+    document.body.appendChild(el);
+  }
+  el.innerHTML += msg + ' (line ' + line + ')<br>';
+};
+
 // ===== 전역 상태 =====
 var allStudents = [];
 var selectedStudent = null;
