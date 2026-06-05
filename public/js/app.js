@@ -1,28 +1,26 @@
 // ===== 전역 상태 =====
-let allStudents = [];
-let selectedStudent = null;
-let selectedDays = [];
-let selectedMode = null;
-let holidays = [];
-let currentWords = [];
-let studyWords = [];
-let currentDaysRange = '';
-let currentBookShort = '';
-let allBooks = [];
+var allStudents = [];
+var selectedStudent = null;
+var selectedDays = [];
+var selectedMode = null;
+var holidays = [];
+var currentWords = [];
+var studyWords = [];
+var currentDaysRange = '';
+var currentBookShort = '';
+var allBooks = [];
 
 // ===== 화면 전환 =====
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
   document.getElementById(id).classList.add('active');
 }
 
 // ===== 교재명 매핑 =====
-const BOOK_MAP = {
-  // 어원편
+var BOOK_MAP = {
   '어원':'능률VOCA 어원편 (2021 개정)', '어원25':'능률VOCA 어원편 고등 (2025 개정)',
   '어원편고등':'능률VOCA 어원편 고등 (2025 개정)',
   '어원중등25':'능률VOCA 어원편 중등 (2025 개정)', '어원Lite':'능률VOCA 어원편 Lite',
-  // 고등
   '고기본':'능률VOCA 고교기본 (2022 개정)', '고필수':'능률VOCA 고교필수 2000 (2022 개정)',
   '고교필수':'능률VOCA 고교필수 2000 (2022 개정)',
   '고난도':'능률 VOCA 중등 고난도 (2025 개정)', '능률고난도':'능률VOCA 고난도 (2022 개정)',
@@ -30,79 +28,79 @@ const BOOK_MAP = {
   '고기본25':'능률VOCA 고등 기본 (2025 개정)', '기본25':'능률 VOCA 중등 기본 (2025 개정)',
   '수필수25':'능률VOCA 수능 필수 (2025 개정)', '수능필수':'능률VOCA 수능 필수 (2025 개정)',
   '수고난도25':'능률VOCA 수능 고난도 (2025 개정)',
-  // 중등
   '중기본25':'능률 VOCA 중등 기본 (2025 개정)', '중필수25':'능률 VOCA 중등 필수 (2025 개정)',
   '중고난도25':'능률 VOCA 중등 고난도 (2025 개정)', '중숙어25':'능률 VOCA 중등 숙어 (2025 개정)',
   '중등필수':'능률 VOCA 중등 필수 (2025 개정)', '중필수':'능률 VOCA 중등 필수 (2025 개정)',
   '중등기본':'능률 VOCA 중등 기본 (2025 개정)', '중기본':'능률 VOCA 중등 기본 (2025 개정)',
   '중등고난도':'능률 VOCA 중등 고난도 (2025 개정)',
-  // 초등
   '초기본25':'능률VOCA 초등 기본 (2025 개정)', '초필수25':'능률VOCA 초등 필수 (2025 개정)',
-  // 주니어
   '입문':'주니어 능률 VOCA 입문 (2023년)', '기본':'주니어 능률 VOCA 기본 (2023년)',
   '실력':'주니어 능률 VOCA 실력 (2023년)',
-  // 어휘끝
   '어끝수능':'어휘끝수능', '어끝블랙':'어휘끝블랙',
   '어끝중필':'어휘끝중학필수', '어끝중고':'어휘끝중학고난도',
-  // 기타
   '빠바':'빠바기초세우기', '특급':'특급 수능·EBS 기출 VOCA (2021 개정)',
   '해커스어원':'해커스 보카 어원편',
   '천마':'천일문중등마스터', '천스':'천일문중등스타트', '천필':'천일문중등필수',
-  '리스2':'리딩튜터스타터2', '리딩튜터스타터2':'리딩튜터스타터2',
+  '리스2':'리딩튜터스타터2', '리딩튜터스타터2':'리딩튜터스타터2'
 };
 
-function resolveBook(s) { return BOOK_MAP[s?.trim()] || s?.trim() || ''; }
+function resolveBook(s) {
+  var t = s ? s.trim() : '';
+  return BOOK_MAP[t] || t;
+}
 
 function parseBooks(bookStr) {
   if (!bookStr || bookStr === 'nan') return [];
-  return bookStr.split(';').filter(b => b.trim()).map(b => {
-    const short = b.split('=')[0].split(':')[0].trim();
-    return { short, full: resolveBook(short), raw: b.trim() };
+  return bookStr.split(';').filter(function(b) { return b.trim(); }).map(function(b) {
+    var short = b.split('=')[0].split(':')[0].trim();
+    return { short: short, full: resolveBook(short), raw: b.trim() };
   });
 }
 
 // ===== 요일 =====
-const YOIL = { '월':1,'화':2,'수':3,'목':4,'금':5,'토':6,'일':0 };
+var YOIL = { '월':1,'화':2,'수':3,'목':4,'금':5,'토':6,'일':0 };
 
 // ===== 진도 계산 =====
-// 원본 Python: step = (day_speed - overlap), 매 수업일마다 step만큼 진행
-// overlap은 앞 수업과 겹치는 과 수 (예: speed=3, overlap=1 → 매일 2과씩 진행, 3과 출제)
 function calcChapter(student, targetDateStr) {
-  const sd = pDate(student.startDate);
+  var sd = pDate(student.startDate);
   if (!sd) return null;
-  const startChap = parseInt(student.startChapter) || 1;
-  const speed = parseInt(student.speed) || 1;
-  const overlap = parseInt(student.overlap) || 0;
-  const step = Math.max(1, speed - overlap); // 매 수업일 실제 진행량
+  var startChap = parseInt(student.startChapter) || 1;
+  var speed = parseInt(student.speed) || 1;
+  var overlap = parseInt(student.overlap) || 0;
+  var step = Math.max(1, speed - overlap);
 
-  const weekdays = [];
-  for (const c of (student.days || '')) { if (YOIL[c] !== undefined) weekdays.push(YOIL[c]); }
-  const allDays = weekdays.length === 0;
+  var weekdays = [];
+  var daysStr = student.days || '';
+  for (var i = 0; i < daysStr.length; i++) {
+    var ch = daysStr[i];
+    if (YOIL[ch] !== undefined) weekdays.push(YOIL[ch]);
+  }
+  var allDaysFlag = weekdays.length === 0;
 
-  let classDays = 0;
-  const tp = targetDateStr.split('-');
-  const target = new Date(parseInt(tp[0]), parseInt(tp[1]) - 1, parseInt(tp[2]));
-  const cur = new Date(sd.getTime());
+  var classDays = 0;
+  var tp = targetDateStr.split('-');
+  var target = new Date(parseInt(tp[0]), parseInt(tp[1]) - 1, parseInt(tp[2]));
+  var cur = new Date(sd.getTime());
   if (target < cur) return null;
 
   while (cur <= target) {
-    const dow = cur.getDay();
-    const ds = fDate(cur);
-    if (!holidays.includes(ds) && (allDays || weekdays.includes(dow))) classDays++;
+    var dow = cur.getDay();
+    var ds = fDate(cur);
+    if (holidays.indexOf(ds) < 0 && (allDaysFlag || weekdays.indexOf(dow) >= 0)) classDays++;
     cur.setDate(cur.getDate() + 1);
   }
 
-  const totalProgress = (classDays - 1) * step; // step 단위로 누적
-  const chapStart = startChap + totalProgress;
-  const chapEnd = chapStart + speed - 1;
-  return { start: Math.max(1, chapStart), end: chapEnd, speed, step };
+  var totalProgress = (classDays - 1) * step;
+  var chapStart = startChap + totalProgress;
+  var chapEnd = chapStart + speed - 1;
+  return { start: Math.max(1, chapStart), end: chapEnd, speed: speed, step: step };
 }
 
 function pDate(s) {
   if (!s) return null;
-  const parts = s.replace(/[./]/g,'-').trim().split('-');
+  var parts = s.replace(/[./]/g,'-').trim().split('-');
   if (parts.length < 3) return null;
-  const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
   return isNaN(d.getTime()) ? null : d;
 }
 function fDate(d) {
@@ -113,9 +111,9 @@ function fDate(d) {
 async function init() {
   document.getElementById('loading').classList.remove('hidden');
   try {
-    const [sRes, hRes] = await Promise.all([fetch('/api/students'), fetch('/api/holidays')]);
-    allStudents = await sRes.json();
-    holidays = await hRes.json();
+    var results = await Promise.all([fetch('/api/students'), fetch('/api/holidays')]);
+    allStudents = await results[0].json();
+    holidays = await results[1].json();
   } catch (e) { console.error(e); allStudents = []; }
   document.getElementById('loading').classList.add('hidden');
 
@@ -136,73 +134,71 @@ function setupModeButtons() {
 
 // ===== 검색 =====
 function setupSearch() {
-  const input = document.getElementById('student-search');
-  const results = document.getElementById('search-results');
+  var input = document.getElementById('student-search');
+  var resultsEl = document.getElementById('search-results');
 
-  input.addEventListener('input', () => {
-    const q = input.value.trim();
-    if (!q) { results.classList.add('hidden'); return; }
-    const matches = allStudents.filter(s => s.name.includes(q));
-    if (!matches.length) { results.classList.add('hidden'); return; }
+  input.addEventListener('input', function() {
+    var q = input.value.trim();
+    if (!q) { resultsEl.classList.add('hidden'); return; }
+    var matches = allStudents.filter(function(s) { return s.name.indexOf(q) >= 0; });
+    if (!matches.length) { resultsEl.classList.add('hidden'); return; }
 
-    results.innerHTML = matches.slice(0, 12).map(s => {
-      const books = parseBooks(s.book).map(b => b.short).join(', ');
-      return `<div class="search-result-item" data-name="${s.name}" data-teacher="${s.teacher}">
-        <div class="name">${s.name}</div>
-        <div class="detail">${books || '교재없음'} · ${s.teacher}</div>
-      </div>`;
+    resultsEl.innerHTML = matches.slice(0, 12).map(function(s) {
+      var books = parseBooks(s.book).map(function(b) { return b.short; }).join(', ');
+      return '<div class="search-result-item" data-name="' + s.name + '" data-teacher="' + s.teacher + '">' +
+        '<div class="name">' + s.name + '</div>' +
+        '<div class="detail">' + (books || '교재없음') + ' · ' + s.teacher + '</div></div>';
     }).join('');
-    results.classList.remove('hidden');
+    resultsEl.classList.remove('hidden');
 
-    results.querySelectorAll('.search-result-item').forEach(el => {
-      el.addEventListener('click', () => {
-        const st = allStudents.find(s => s.name === el.dataset.name && s.teacher === el.dataset.teacher);
-        if (st) { selectStudent(st); results.classList.add('hidden'); input.value = st.name; }
+    resultsEl.querySelectorAll('.search-result-item').forEach(function(el) {
+      el.addEventListener('click', function() {
+        var st = allStudents.find(function(s) { return s.name === el.dataset.name && s.teacher === el.dataset.teacher; });
+        if (st) { selectStudent(st); resultsEl.classList.add('hidden'); input.value = st.name; }
       });
     });
   });
-  document.addEventListener('click', e => { if (!e.target.closest('.search-box')) results.classList.add('hidden'); });
+  document.addEventListener('click', function(e) { if (!e.target.closest('.search-box')) resultsEl.classList.add('hidden'); });
 }
 
 // ===== 랭킹 =====
 async function loadRankings() {
   try {
-    const res = await fetch('/api/rankings/today');
-    const data = await res.json();
-    const list = document.getElementById('ranking-list');
+    var res = await fetch('/api/rankings/today');
+    var data = await res.json();
+    var list = document.getElementById('ranking-list');
     if (!data.length) { list.innerHTML = '<p class="empty-msg">아직 기록이 없습니다</p>'; return; }
-    list.innerHTML = data.map((r, i) => {
-      const cls = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-      const time = (r.created_at || '').split(' ')[1]?.slice(0,5) || '';
-      const range = r.days_range ? ' ' + r.days_range : '';
-      return `<div class="rank-item">
-        <span class="rank-num ${cls}">${i+1}</span>
-        <div class="rank-info"><span class="rank-name">${r.name}</span>
-          <span class="rank-book">${r.book}${range} ${time}</span></div>
-        <span class="rank-score">${r.score}</span>
-      </div>`;
+    list.innerHTML = data.map(function(r, i) {
+      var cls = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+      var timeParts = (r.created_at || '').split(' ');
+      var time = timeParts[1] ? timeParts[1].slice(0,5) : '';
+      var range = r.days_range ? ' ' + r.days_range : '';
+      return '<div class="rank-item">' +
+        '<span class="rank-num ' + cls + '">' + (i+1) + '</span>' +
+        '<div class="rank-info"><span class="rank-name">' + r.name + '</span>' +
+        '<span class="rank-book">' + r.book + range + ' ' + time + '</span></div>' +
+        '<span class="rank-score">' + r.score + '</span></div>';
     }).join('');
-  } catch {}
+  } catch (e) {}
 }
 
 async function loadWeeklyTop() {
   try {
-    const res = await fetch('/api/rankings/weekly-top');
-    const data = await res.json();
-    const list = document.getElementById('weekly-list');
+    var res = await fetch('/api/rankings/weekly-top');
+    var data = await res.json();
+    var list = document.getElementById('weekly-list');
     if (!data.length) { list.innerHTML = '<p class="empty-msg">기록 없음</p>'; return; }
-    list.innerHTML = data.map((r, i) => {
-      const cls = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-      const range = r.days_range ? ' ' + r.days_range : '';
-      return `<div class="rank-item">
-        <span class="rank-num ${cls}">${i+1}</span>
-        <div class="rank-info"><span class="rank-name">${r.name}</span>
-          <span class="rank-book">${r.book}${range}</span>
-          <span class="rank-range">${r.date || ''}</span></div>
-        <span class="rank-score">${r.score}</span>
-      </div>`;
+    list.innerHTML = data.map(function(r, i) {
+      var cls = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+      var range = r.days_range ? ' ' + r.days_range : '';
+      return '<div class="rank-item">' +
+        '<span class="rank-num ' + cls + '">' + (i+1) + '</span>' +
+        '<div class="rank-info"><span class="rank-name">' + r.name + '</span>' +
+        '<span class="rank-book">' + r.book + range + '</span>' +
+        '<span class="rank-range">' + (r.date || '') + '</span></div>' +
+        '<span class="rank-score">' + r.score + '</span></div>';
     }).join('');
-  } catch {}
+  } catch (e) {}
 }
 
 // ===== 학생 선택 =====
@@ -212,75 +208,90 @@ function selectStudent(student) {
   selectedMode = null;
 
   document.getElementById('selected-name').textContent = student.name;
-  const books = parseBooks(student.book);
-  document.getElementById('selected-book').textContent = books.map(b => b.short).join(', ') || '교재 없음';
+  var books = parseBooks(student.book);
+  document.getElementById('selected-book').textContent = books.map(function(b) { return b.short; }).join(', ') || '교재 없음';
 
   buildSchedule(student, books);
   buildDayChips(student, books);
-  document.querySelectorAll('.big-mode-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.big-mode-btn').forEach(function(b) { b.classList.remove('selected'); });
   updateStartBtn();
+
+  // 자유 도전 초기화
+  var freeSelect = document.getElementById('free-book-select');
+  if (freeSelect) freeSelect.value = '';
+  var freeRange = document.getElementById('free-range');
+  if (freeRange) freeRange.classList.add('hidden');
+  var freeDetail = document.getElementById('free-challenge-detail');
+  if (freeDetail) freeDetail.removeAttribute('open');
 
   showScreen('setup-screen');
 }
 
 // ===== 진도표 (수업일만 표시) =====
 function buildSchedule(student, books) {
-  const table = document.getElementById('schedule-table');
-  const today = new Date();
-  const todayStr = fDate(today);
-  const dayNames = ['일','월','화','수','목','금','토'];
+  var table = document.getElementById('schedule-table');
+  var today = new Date();
+  var todayStr = fDate(today);
+  var dayNames = ['일','월','화','수','목','금','토'];
 
-  // 학생 수업 요일 파싱
-  const weekdays = [];
-  for (const c of (student.days || '')) { if (YOIL[c] !== undefined) weekdays.push(YOIL[c]); }
-  const allDays = weekdays.length === 0;
+  var weekdays = [];
+  var daysStr = student.days || '';
+  for (var i = 0; i < daysStr.length; i++) {
+    var ch = daysStr[i];
+    if (YOIL[ch] !== undefined) weekdays.push(YOIL[ch]);
+  }
+  var allDaysFlag = weekdays.length === 0;
 
   function isClassDay(dateStr) {
-    if (holidays.includes(dateStr)) return false;
-    const d = new Date(dateStr + 'T00:00:00');
-    return allDays || weekdays.includes(d.getDay());
+    if (holidays.indexOf(dateStr) >= 0) return false;
+    var dp = dateStr.split('-');
+    var d = new Date(parseInt(dp[0]), parseInt(dp[1]) - 1, parseInt(dp[2]));
+    return allDaysFlag || weekdays.indexOf(d.getDay()) >= 0;
   }
 
-  // 수업일만 앞뒤 3일씩 수집
-  const classDates = [];
-  // 과거 수업일 3개
-  const past = [];
-  const d1 = new Date(today);
+  var past = [];
+  var d1 = new Date(today);
   while (past.length < 3) {
     d1.setDate(d1.getDate() - 1);
-    const ds = fDate(d1);
-    if (isClassDay(ds)) past.unshift(ds);
+    var ds1 = fDate(d1);
+    if (isClassDay(ds1)) past.unshift(ds1);
     if (d1 < new Date(today.getFullYear(), today.getMonth() - 1, 1)) break;
   }
-  // 오늘 + 미래 수업일 4개
-  const future = [];
+  var future = [];
   if (isClassDay(todayStr)) future.push(todayStr);
-  const d2 = new Date(today);
+  var d2 = new Date(today);
   while (future.length < 5) {
     d2.setDate(d2.getDate() + 1);
-    const ds = fDate(d2);
-    if (isClassDay(ds)) future.push(ds);
+    var ds2 = fDate(d2);
+    if (isClassDay(ds2)) future.push(ds2);
     if (d2 > new Date(today.getFullYear(), today.getMonth() + 2, 1)) break;
   }
 
-  const dates = [...past, ...future];
+  var dates = past.concat(future);
   // 중복 제거
-  const unique = [...new Set(dates)];
+  var seen = {};
+  var unique = [];
+  for (var u = 0; u < dates.length; u++) {
+    if (!seen[dates[u]]) { seen[dates[u]] = true; unique.push(dates[u]); }
+  }
 
-  const rows = [];
-  for (const ds of unique) {
-    const dd = new Date(ds + 'T00:00:00');
-    const isToday = ds === todayStr;
-    const chapInfos = [];
-    for (const b of books) {
-      const info = calcChapter({ ...student }, ds);
-      if (info && info.start >= 1) chapInfos.push(`${b.short} ${info.start}${info.end !== info.start ? '~'+info.end : ''}과`);
+  var rows = [];
+  for (var ri = 0; ri < unique.length; ri++) {
+    var ds = unique[ri];
+    var dp = ds.split('-');
+    var dd = new Date(parseInt(dp[0]), parseInt(dp[1]) - 1, parseInt(dp[2]));
+    var isToday = ds === todayStr;
+    var chapInfos = [];
+    for (var bi = 0; bi < books.length; bi++) {
+      var info = calcChapter(student, ds);
+      if (info && info.start >= 1) {
+        chapInfos.push(books[bi].short + ' ' + info.start + (info.end !== info.start ? '~' + info.end : '') + '과');
+      }
     }
-    if (!chapInfos.length && !isToday) continue; // 진도 없는 날은 건너뜀
-    rows.push(`<div class="sched-row ${isToday ? 'today' : ''}">
-      <span class="sched-date">${ds.slice(5)} (${dayNames[dd.getDay()]})${isToday ? ' ◀' : ''}</span>
-      <span class="sched-day">${chapInfos.join(' / ') || '-'}</span>
-    </div>`);
+    if (!chapInfos.length && !isToday) continue;
+    rows.push('<div class="sched-row ' + (isToday ? 'today' : '') + '">' +
+      '<span class="sched-date">' + ds.slice(5) + ' (' + dayNames[dd.getDay()] + ')' + (isToday ? ' ◀' : '') + '</span>' +
+      '<span class="sched-day">' + (chapInfos.join(' / ') || '-') + '</span></div>');
   }
 
   table.innerHTML = rows.join('');
@@ -288,40 +299,38 @@ function buildSchedule(student, books) {
 
 // ===== Day 칩 =====
 function buildDayChips(student, books) {
-  const chips = document.getElementById('day-chips');
+  var chips = document.getElementById('day-chips');
   chips.innerHTML = '';
   if (!books.length) return;
 
-  const todayStr = fDate(new Date());
-  const info = calcChapter(student, todayStr);
+  var todayStr = fDate(new Date());
+  var info = calcChapter(student, todayStr);
   if (!info) { chips.innerHTML = '<span style="color:var(--text-dim);font-size:0.85em">진도 계산 불가</span>'; return; }
 
-  const speed = info.speed;
-  const step = info.step || Math.max(1, speed);
-  const rangeCheck = document.getElementById('range-mode');
+  var speed = info.speed;
+  var step = info.step || Math.max(1, speed);
+  var rangeCheck = document.getElementById('range-mode');
 
-  // 앞뒤 3일분 + 오늘 (step 단위로 이동)
-  const allChips = [];
-  for (let offset = -3; offset <= 3; offset++) {
-    const dayStart = info.start + offset * step;
-    const dayEnd = dayStart + speed - 1;
+  var allChips = [];
+  for (var offset = -3; offset <= 3; offset++) {
+    var dayStart = info.start + offset * step;
+    var dayEnd = dayStart + speed - 1;
     if (dayStart < 1) continue;
-    const isToday = offset === 0;
-    allChips.push({ dayStart, dayEnd, isToday, offset });
+    var isToday = offset === 0;
+    allChips.push({ dayStart: dayStart, dayEnd: dayEnd, isToday: isToday, offset: offset });
   }
 
-  allChips.forEach(c => {
-    const chip = document.createElement('button');
+  allChips.forEach(function(c) {
+    var chip = document.createElement('button');
     chip.className = 'day-chip' + (c.isToday ? ' today-marker' : '');
-    chip.textContent = c.dayStart === c.dayEnd ? `${c.dayStart}과` : `${c.dayStart}~${c.dayEnd}과`;
+    chip.textContent = c.dayStart === c.dayEnd ? c.dayStart + '과' : c.dayStart + '~' + c.dayEnd + '과';
     chip.dataset.start = c.dayStart;
     chip.dataset.end = c.dayEnd;
-    chip.addEventListener('click', () => toggleChip(chip));
+    chip.addEventListener('click', function() { toggleChip(chip); });
     chips.appendChild(chip);
   });
 
-  // 시험범위 전체 = 오늘의 시험 범위만 선택
-  rangeCheck.onchange = () => {
+  rangeCheck.onchange = function() {
     if (rangeCheck.checked) {
       selectTodayChip();
     } else {
@@ -330,25 +339,23 @@ function buildDayChips(student, books) {
     updateStartBtn();
   };
 
-  // 기본: 오늘 시험범위 선택
   if (rangeCheck.checked) selectTodayChip();
 }
 
 function selectTodayChip() {
   clearAllChips();
-  // 오늘 표시가 된 칩만 선택
-  const todayChip = document.querySelector('.day-chip.today-marker');
+  var todayChip = document.querySelector('.day-chip.today-marker');
   if (todayChip) {
     todayChip.classList.add('selected');
-    const s = parseInt(todayChip.dataset.start), e = parseInt(todayChip.dataset.end);
-    for (let d = s; d <= e; d++) { if (!selectedDays.includes(d)) selectedDays.push(d); }
-    selectedDays.sort((a,b) => a - b);
+    var s = parseInt(todayChip.dataset.start), e = parseInt(todayChip.dataset.end);
+    for (var d = s; d <= e; d++) { if (selectedDays.indexOf(d) < 0) selectedDays.push(d); }
+    selectedDays.sort(function(a,b) { return a - b; });
   }
 }
 
 function clearAllChips() {
   selectedDays = [];
-  document.querySelectorAll('.day-chip').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.day-chip').forEach(function(c) { c.classList.remove('selected'); });
 }
 
 function toggleChip(chip) {
@@ -360,17 +367,17 @@ function toggleChip(chip) {
 
 function rebuildSelectedDays() {
   selectedDays = [];
-  document.querySelectorAll('.day-chip.selected').forEach(c => {
-    const s = parseInt(c.dataset.start), e = parseInt(c.dataset.end);
-    for (let d = s; d <= e; d++) { if (!selectedDays.includes(d)) selectedDays.push(d); }
+  document.querySelectorAll('.day-chip.selected').forEach(function(c) {
+    var s = parseInt(c.dataset.start), e = parseInt(c.dataset.end);
+    for (var d = s; d <= e; d++) { if (selectedDays.indexOf(d) < 0) selectedDays.push(d); }
   });
-  selectedDays.sort((a,b) => a - b);
+  selectedDays.sort(function(a,b) { return a - b; });
 }
 
 // ===== 모드 선택 =====
 function selectMode(mode) {
   selectedMode = mode;
-  document.querySelectorAll('.big-mode-btn').forEach(b => {
+  document.querySelectorAll('.big-mode-btn').forEach(function(b) {
     b.classList.toggle('selected', b.dataset.mode === mode);
   });
   updateStartBtn();
@@ -381,40 +388,42 @@ function updateStartBtn() {
 }
 
 // ===== 게임 시작 =====
-document.getElementById('start-btn')?.addEventListener('click', launchGame);
+var startBtn = document.getElementById('start-btn');
+if (startBtn) startBtn.addEventListener('click', launchGame);
 
 async function launchGame() {
   if (!selectedStudent || !selectedDays.length || !selectedMode) return;
 
-  // 자유 도전 모드 체크
-  const freeSelect = document.getElementById('free-book-select');
-  const freeBook = freeSelect ? freeSelect.value : '';
-  let bookFull, bookShort;
+  var freeSelect = document.getElementById('free-book-select');
+  var freeBook = freeSelect ? freeSelect.value : '';
+  var bookFull, bookShort;
 
   if (freeBook) {
     bookFull = freeBook;
-    // 단축어 역탐색
-    bookShort = Object.keys(BOOK_MAP).find(k => BOOK_MAP[k] === freeBook) || freeBook.slice(0, 10);
+    bookShort = '';
+    var keys = Object.keys(BOOK_MAP);
+    for (var ki = 0; ki < keys.length; ki++) {
+      if (BOOK_MAP[keys[ki]] === freeBook) { bookShort = keys[ki]; break; }
+    }
+    if (!bookShort) bookShort = freeBook.slice(0, 10);
   } else {
-    const books = parseBooks(selectedStudent.book);
+    var books = parseBooks(selectedStudent.book);
     if (!books.length) return;
     bookFull = books[0].full;
     bookShort = books[0].short;
   }
 
-  // 표제어/파생어
-  const status = (selectedStudent.status || '').toLowerCase();
-  let types = '표제어,파생어';
-  if (!freeBook && status.includes('p') && !status.includes('v')) types = '표제어';
+  var status = (selectedStudent.status || '').toLowerCase();
+  var types = '표제어,파생어';
+  if (!freeBook && status.indexOf('p') >= 0 && status.indexOf('v') < 0) types = '표제어';
 
-  const url = `/api/words?book=${encodeURIComponent(bookFull)}&days=${selectedDays.join(',')}&types=${types}`;
-  const res = await fetch(url);
+  var url = '/api/words?book=' + encodeURIComponent(bookFull) + '&days=' + selectedDays.join(',') + '&types=' + types;
+  var res = await fetch(url);
   currentWords = await res.json();
 
   if (!currentWords.length) { alert('해당 범위에 단어가 없습니다.'); return; }
 
-  // 범위 기록
-  const sorted = [...selectedDays].sort((a,b) => a - b);
+  var sorted = selectedDays.slice().sort(function(a,b) { return a - b; });
   currentDaysRange = sorted[0] === sorted[sorted.length-1] ? sorted[0] + '과' : sorted[0] + '~' + sorted[sorted.length-1] + '과';
   currentBookShort = bookShort;
 
@@ -427,13 +436,13 @@ async function launchGame() {
 }
 
 // ===== 학습모드 =====
-let studyIdx = 0;
-let studyKnown = [];
-let studyUnknown = [];
-let studyFlipped = false;
+var studyIdx = 0;
+var studyKnown = [];
+var studyUnknown = [];
+var studyFlipped = false;
 
 function startStudyMode(words) {
-  studyWords = [...words].sort(() => Math.random() - 0.5);
+  studyWords = words.slice().sort(function() { return Math.random() - 0.5; });
   studyIdx = 0;
   studyKnown = [];
   studyUnknown = [];
@@ -447,19 +456,18 @@ function startStudyMode(words) {
 
 function showStudyCard() {
   if (studyIdx >= studyWords.length) { finishStudy(); return; }
-  const w = studyWords[studyIdx];
+  var w = studyWords[studyIdx];
   document.getElementById('card-meaning').textContent = w.meaning;
   document.getElementById('card-word').textContent = w.word;
   document.getElementById('card-full-meaning').textContent = w.meaning;
   document.getElementById('card-sentence').textContent = w.sentence || '';
   document.querySelector('.card-front').classList.remove('hidden');
   document.querySelector('.card-back').classList.add('hidden');
-  document.getElementById('study-progress').textContent = `${studyIdx + 1} / ${studyWords.length}`;
+  document.getElementById('study-progress').textContent = (studyIdx + 1) + ' / ' + studyWords.length;
   studyFlipped = false;
 }
 
 function flipCard() {
-  // 토글: 앞↔뒤 반복 가능
   studyFlipped = !studyFlipped;
   if (studyFlipped) {
     document.querySelector('.card-front').classList.add('hidden');
@@ -472,11 +480,10 @@ function flipCard() {
 
 function markCard(known) {
   if (!studyFlipped) {
-    // 아직 안 뒤집었으면 뒤집기만 하고 넘기지 않음
     flipCard();
     return;
   }
-  const w = studyWords[studyIdx];
+  var w = studyWords[studyIdx];
   if (known) studyKnown.push(w);
   else studyUnknown.push(w);
   studyIdx++;
@@ -486,14 +493,14 @@ function markCard(known) {
 function finishStudy() {
   document.querySelector('.study-card-area').style.display = 'none';
   document.querySelector('.study-buttons').style.display = 'none';
-  const result = document.getElementById('study-result');
+  var result = document.getElementById('study-result');
   result.classList.remove('hidden');
   document.getElementById('study-summary').textContent =
-    `알아요: ${studyKnown.length}개 / 몰라요: ${studyUnknown.length}개`;
-  const wrongList = document.getElementById('study-wrong-list');
-  wrongList.innerHTML = studyUnknown.map(w =>
-    `<div class="wrong-word-item"><span class="eng">${w.word}</span><span class="kor">${w.meaning}</span></div>`
-  ).join('');
+    '알아요: ' + studyKnown.length + '개 / 몰라요: ' + studyUnknown.length + '개';
+  var wrongList = document.getElementById('study-wrong-list');
+  wrongList.innerHTML = studyUnknown.map(function(w) {
+    return '<div class="wrong-word-item"><span class="eng">' + w.word + '</span><span class="kor">' + w.meaning + '</span></div>';
+  }).join('');
 }
 
 function retryStudy() {
@@ -520,49 +527,55 @@ async function saveRanking(name, book, score, correct, wrong, maxCombo, mode, da
   try {
     await fetch('/api/rankings', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, book, score, correct, wrong, maxCombo, mode, daysRange })
+      body: JSON.stringify({ name: name, book: book, score: score, correct: correct, wrong: wrong, maxCombo: maxCombo, mode: mode, daysRange: daysRange })
     });
     loadRankings();
     loadWeeklyTop();
-  } catch {}
+  } catch (e) {}
 }
 
 // ===== 자유 도전 =====
 async function loadFreeBooks() {
   try {
-    const res = await fetch('/api/books');
+    var res = await fetch('/api/books');
     allBooks = await res.json();
-    const select = document.getElementById('free-book-select');
+    var select = document.getElementById('free-book-select');
     if (!select) return;
-    allBooks.forEach(b => {
-      const opt = document.createElement('option');
+    for (var i = 0; i < allBooks.length; i++) {
+      var b = allBooks[i];
+      var opt = document.createElement('option');
       opt.value = b.book_name;
       opt.textContent = b.book_name + ' (' + b.minDay + '~' + b.maxDay + '과)';
       select.appendChild(opt);
-    });
+    }
     select.addEventListener('change', onFreeBookChange);
-    document.getElementById('free-all-btn')?.addEventListener('click', onFreeAllRange);
-  } catch {}
+    var freeAllBtn = document.getElementById('free-all-btn');
+    if (freeAllBtn) freeAllBtn.addEventListener('click', onFreeAllRange);
+  } catch (e) {}
 }
 
 function onFreeBookChange() {
-  const select = document.getElementById('free-book-select');
-  const rangeDiv = document.getElementById('free-range');
-  const book = allBooks.find(b => b.book_name === select.value);
+  var select = document.getElementById('free-book-select');
+  var rangeDiv = document.getElementById('free-range');
+  var book = null;
+  for (var i = 0; i < allBooks.length; i++) {
+    if (allBooks[i].book_name === select.value) { book = allBooks[i]; break; }
+  }
   if (!book) { rangeDiv.classList.add('hidden'); return; }
   document.getElementById('free-range-info').textContent = book.minDay + '~' + book.maxDay + '과';
   rangeDiv.classList.remove('hidden');
 }
 
 function onFreeAllRange() {
-  const select = document.getElementById('free-book-select');
-  const book = allBooks.find(b => b.book_name === select.value);
+  var select = document.getElementById('free-book-select');
+  var book = null;
+  for (var i = 0; i < allBooks.length; i++) {
+    if (allBooks[i].book_name === select.value) { book = allBooks[i]; break; }
+  }
   if (!book) return;
-  // 전체 범위를 selectedDays에 설정
   selectedDays = [];
-  for (let d = book.minDay; d <= book.maxDay; d++) selectedDays.push(d);
-  // 기존 day-chips 클리어하고 자유 도전 범위 표시
-  const chips = document.getElementById('day-chips');
+  for (var d = book.minDay; d <= book.maxDay; d++) selectedDays.push(d);
+  var chips = document.getElementById('day-chips');
   chips.innerHTML = '<span style="color:var(--accent);font-size:0.85em">' + book.book_name + ' 전체 (' + book.minDay + '~' + book.maxDay + '과)</span>';
   document.getElementById('range-mode').checked = false;
   updateStartBtn();
